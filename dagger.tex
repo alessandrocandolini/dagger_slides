@@ -503,16 +503,25 @@ class Module {
 }
 \end{lstlisting} 
 \end{frame}
-
+\begin{frame}
+	\begin{itemize}
+		\item modules provide a flexible, pluggable, \emph{declarative} definition on how to instantiate dependencies in the modules 
+		\item we have just to implement the interface for the injector that builds the necessary dependencies and plug them into the target (wiring) 
+	\end{itemize}
+\end{frame}
 \plain{The end\ldots (really?)}
 \begin{frame}[fragile]
-	\begin{alertblock}{Caution!!}
+	\begin{alertblock}{inconveniences}
+		\begin{itemize}
+			\item Boilerplate in implementing the injector 
+			\item 
 		Combinatorial explosion when chaining mutual dependencies
+		\end{itemize}
 	\end{alertblock}
 \end{frame}
 
 \begin{frame}
-	Dependency injection frameworks help to \emph{manage} the graph of dependencies. 
+	Dependency injection frameworks help to \emph{automatic organise} the graph of dependencies. 
 
 	Few famous ones for Java:
 	\begin{itemize}
