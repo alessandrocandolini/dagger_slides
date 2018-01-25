@@ -336,11 +336,29 @@ class C(private a : A) { // A being now an interface
 \end{lstlisting} 
 \end{frame}
 \begin{frame}[fragile]
-	Antipattern: 
+Antipattern: we want\ldots 
 \begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
 class MainActivity : AppCompatActivity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    lateinit var presenter : Presenter
+
+    override fun onCreate(bundle: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+	presenter.doSomething()
+    }
+}
+\end{lstlisting} 
+\end{frame}
+
+\begin{frame}[fragile]
+	\ldots instead  we get
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+class MainActivity : AppCompatActivity() {
+
+    lateinit var presenter : Presenter
+
+    override fun onCreate(bundle: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         val okHttp : OkHttp = ...
@@ -349,6 +367,7 @@ class MainActivity : AppCompatActivity() {
         val repository : Repository = ...
         val usecase : UseCase = ...
         val presenter : Presenter = ...
+	presenter.doSomething()
 
     }
 }
@@ -356,6 +375,26 @@ class MainActivity : AppCompatActivity() {
 \end{frame}
 \begin{frame}[fragile]
 	
+\begin{frame}[fragile]
+	\begin{alertblock}{Question}
+If 
+		\begin{itemize}
+			\item $A$ is not in charge of getting $B$
+			\item $C$ should not be in charge of instantiating $A$ and $B$  
+		\end{itemize}
+		\textbf{who} is in charge?
+	\end{alertblock}
+
+\end{frame}
+\begin{frame}[fragile]
+	\begin{quotation}
+		In software engineering, dependency injection is a technique whereby one object supplies the dependencies of another object. A dependency is an object that can be used (a service). An injection is the passing of a dependency to a dependent object (a client) that would use it. The service is made part of the client's state. Passing the service to the client, rather than allowing a client to build or find the service, is the fundamental requirement of the pattern.
+	\end{quotation}
+	\begin{quotation}
+		It directly contrasts with the service locator pattern, which allows clients to know about the system they use to find dependencies.
+	\end{quotation}
+	Source: \url{https://en.wikipedia.org/wiki/Dependency_injection}
+\end{frame}
 \begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
 class MainActivity : AppCompatActivity() {
 
@@ -378,25 +417,29 @@ class MainActivity : AppCompatActivity() {
 	\end{figure}
 	\url{https://docs.oracle.com/javaee/6/api/javax/inject/Inject.html}
 \end{frame}
-\begin{frame}[fragile]
-	\begin{alertblock}{Question}
-If 
-		\begin{itemize}
-			\item $A$ is not in charge of getting $B$
-			\item $C$ should not be in charge of instantiating $A$ and $B$  
-		\end{itemize}
-		\textbf{who} is in charge?
-	\end{alertblock}
 
+\begin{frame}[fragile]
+	Ingredients:%
+	\footnote{Preparing the ground for dagger terminology, but here we are not using dagger yet}
+	\begin{description}
+		\item[modules]: it containes recipies (methods) to instantiate the dependencies 
+		\item[injector/component]: wiring  and feed the target with the dependencies it needs 
+	\end{description}
 \end{frame}
 \begin{frame}[fragile]
-	\begin{quotation}
-		In software engineering, dependency injection is a technique whereby one object supplies the dependencies of another object. A dependency is an object that can be used (a service). An injection is the passing of a dependency to a dependent object (a client) that would use it. The service is made part of the client's state. Passing the service to the client, rather than allowing a client to build or find the service, is the fundamental requirement of the pattern.
-	\end{quotation}
-	\begin{quotation}
-		It directly contrasts with the service locator pattern, which allows clients to know about the system they use to find dependencies.
-	\end{quotation}
-	Source: \url{https://en.wikipedia.org/wiki/Dependency_injection}
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+// injector 
+interface Component {
+    fun inject(activity : MainActivity)
+}
+
+// provides the dependencies 
+class Module {
+    fun providePresenter(): Presenter {
+        
+    }
+}
+\end{lstlisting} 
 \end{frame}
 	\section{Dagger2}
 	\section{Dagger2 Android }
