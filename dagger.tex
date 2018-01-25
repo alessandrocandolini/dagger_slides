@@ -361,19 +361,18 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(bundle: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        val okHttp : OkHttp = ...
-        val gson : Gson = GsonBuilder = ...
-        val retrofit : Retrofit = ...
-        val repository : Repository = ...
-        val usecase : UseCase = ...
-        val presenter : Presenter = ...
+        val okHttp : OkHttp = /*...*/
+        val gson : Gson = GsonBuilder = /*...*/
+        val retrofit : Retrofit = /*...*/
+        val repository : Repository = /*...*/
+        val usecase : UseCase = /*...*/
+        val presenter : Presenter = /*...*/
 	presenter.doSomething()
 
     }
 }
 \end{lstlisting} 
 \end{frame}
-\begin{frame}[fragile]
 	
 \begin{frame}[fragile]
 	\begin{alertblock}{Question}
@@ -384,7 +383,6 @@ If
 		\end{itemize}
 		\textbf{who} is in charge?
 	\end{alertblock}
-
 \end{frame}
 \begin{frame}[fragile]
 	\begin{quotation}
@@ -395,29 +393,6 @@ If
 	\end{quotation}
 	Source: \url{https://en.wikipedia.org/wiki/Dependency_injection}
 \end{frame}
-\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-class MainActivity : AppCompatActivity() {
-
-    @Inject
-    lateinit var presenter : Presenter
-
-    override fun onCreate(bundle: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-	presenter.doSomething()
-    }
-}
-\end{lstlisting} 
-\end{frame}
-
-\begin{frame}[fragile]
-	\begin{figure}
-		\centering
-		\includegraphics[width=.9\textwidth]{inject}
-	\end{figure}
-	\url{https://docs.oracle.com/javaee/6/api/javax/inject/Inject.html}
-\end{frame}
-
 \begin{frame}[fragile]
 	Ingredients:%
 	\footnote{Preparing the ground for dagger terminology, but here we are not using dagger yet}
@@ -425,10 +400,36 @@ class MainActivity : AppCompatActivity() {
 		\item[modules]: it containes recipies (methods) to instantiate the dependencies 
 		\item[injector/component]: wiring  and feed the target with the dependencies it needs 
 	\end{description}
+
+		\begin{figure}
+			\centering
+\begin{tikzpicture}
+\umlsimpleclass{Component}
+	\umlsimpleclass[x=4]{ModuleA}
+	\umlsimpleclass[x=4, y=-1]{ModuleB}
+\end{tikzpicture}
+		\end{figure}
+
+		\begin{itemize}
+			\item 
+	Often, the injector is also responsible of instantiating the client itself. 
+	Sometimes this is not possible (\eg, Android)
+\item Modules are pluggable in the injector 
+		\end{itemize}
+\end{frame}
+\begin{frame}[fragile]
+	Injector 
+	\begin{itemize}
+		\item ensures inversion of control (\ie, \emph{duality}): 
+			\begin{itemize}
+				\item You reverse the control of the object dependencies from the object to the one who is calling the object
+			\end{itemize}
+		\item restores single responsibility principle 
+	\end{itemize}
 \end{frame}
 \begin{frame}[fragile]
 \begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-// injector 
+// injector  (wiring things up) 
 interface Component {
     fun inject(activity : MainActivity)
 }
@@ -441,10 +442,113 @@ class Module {
 }
 \end{lstlisting} 
 \end{frame}
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+class MainActivity : AppCompatActivity() {
+
+    @Inject
+    lateinit var presenter : Presenter
+
+    override fun onCreate(bundle: Bundle?) {
+	val injector = InjectorImplementation();
+	injector.inject(this);  
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+	presenter.doSomething()
+    }
+}
+\end{lstlisting} 
+	 Activity accepts the dependencies from an injector. 
+	 It is no longer responsible for creating the dependecies needed,
+	 or to delegate instantiation to another object
+\end{frame}
+\begin{frame}[fragile]
+	\begin{figure}
+		\centering
+		\includegraphics[width=.9\textwidth]{inject}
+	\end{figure}
+	\url{https://docs.oracle.com/javaee/6/api/javax/inject/Inject.html}
+\end{frame}
+\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+// provides the dependencies 
+class Module {
+    fun providePresenter(): Presenter {
+        val okHttp : OkHttp = ...
+        val gson : Gson = GsonBuilder = ...
+        val retrofit : Retrofit = ...
+        val repository : Repository = /*...*/
+        val usecase : UseCase = /*...*/
+	return Presenter(usecase) 
+    }
+}
+\end{lstlisting} 
+\end{frame}
+\begin{frame}[fragile]
+	We can be more granular:
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+class Module {
+  fun providesOkHttp() : OkHttp = /*..*/
+  fun providesGson() : Gson = /*..*/
+  fun providesRetrofit(gson:Gson, okHttp : OkHttp) 
+       : Retrofit = /*..*/
+  fun providesRepository(retrofit : Retrofit) 
+       : Repository = /*..*/
+  fun providesUseCase(repository:Repository) 
+       : UseCase = /*..*/
+    
+  fun providePresenter(useCase: UseCase) 
+       : Presenter = PresenterImpl(usecase) 
+}
+\end{lstlisting} 
+\end{frame}
+
+\plain{The end\ldots (really?)}
+\begin{frame}[fragile]
+	\begin{alertblock}{Caution!!}
+		Combinatorial explosion when chaining mutual dependencies
+	\end{alertblock}
+\end{frame}
+
+\begin{frame}
+	Dependency injection frameworks help to \emph{manage} the graph of dependencies. 
+
+	Few famous ones for Java:
+	\begin{itemize}
+		\item Pivotal's Spring Core Container (autowiring) 
+		\item Google's Guava 
+		\item Square's Dagger1
+		\item Google's Dagger2
+	\end{itemize}
+\end{frame}
+
+\begin{frame}
+	Two strategies (common in java):
+	\begin{itemize}
+		\item Reflection (runtime) 
+		\item Annotation processing (compile time)
+	\end{itemize}
+
+	Pros/cons\ldots 
+\end{frame}
+
 	\section{Dagger2}
+	\begin{frame}
+		Dagger is
+		\begin{itemize}
+			\item fully static 
+			\item compile-time 
+			\item annotation processing based 
+			\item dependency injection framework
+			\item for Java/Android
+			\item that organises dependencies into a \emph{directed acyclic graph
+				}	(DAGger)
+		\end{itemize}
+	\end{frame}
 	\section{Dagger2 Android }
 	\section{Alternative patterns}
-	\begin{frame}
+	\begin{frame}[fragile]
 		\begin{itemize}
 			\item Cake pattern
 			\item Reader monad 
