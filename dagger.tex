@@ -212,8 +212,7 @@ class B {
 		Example:
 		\begin{itemize}
 			\item Custom views or adapters instantiating objects 
-			\item \verb|Date date = new Date()\| 
-			\item 
+			\item \verb|Date date = new Date()| (imagine test today date) 
 		\end{itemize}
 	\end{frame}
 
@@ -523,7 +522,7 @@ class Module {
 \begin{frame}
 	Dependency injection frameworks help to \emph{automatic organise} the graph of dependencies. 
 
-	Few famous ones for Java:
+	Common DI frameworks for the Java platform:
 	\begin{itemize}
 		\item Pivotal's Spring Core Container (autowiring) 
 		\item Google's Guava 
@@ -536,7 +535,7 @@ class Module {
 	Two strategies (common in java):
 	\begin{itemize}
 		\item Reflection (runtime) 
-		\item Annotation processing (compile time)
+		\item JSR-269 Annotation processing (compile time)
 	\end{itemize}
 
 	Pros/cons\ldots 
@@ -544,18 +543,301 @@ class Module {
 
 	\section{Dagger2}
 	\begin{frame}
-		Dagger is
+		Dagger2 is
 		\begin{itemize}
 			\item fully static 
 			\item compile-time 
 			\item annotation processing based 
+			\item Java/Android
 			\item dependency injection framework
-			\item for Java/Android
-			\item that organises dependencies into a \emph{directed acyclic graph
+			\item for organising dependencies into a \emph{directed acyclic graph
 				}	(DAGger)
 		\end{itemize}
 	\end{frame}
+
+	\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+// Gradle module file 
+implementation group: 'com.google.dagger', \
+        name: 'dagger', \
+	version: '2.14.1'
+implementation group: 'com.google.dagger', \ // <-- 
+     name: 'dagger-compiler', 
+     version: '2.14.1'
+\end{lstlisting} 
+Check 
+		\url{https://mvnrepository.com/artifact/com.google.dagger/dagger/}
+\end{frame}
+
+
+	\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+@Module
+class NetworkModule {
+  @Provides
+  fun providesOkHttp() : OkHttp = /*..*/
+
+  @Provides
+  fun providesGson() : Gson = /*..*/
+
+  @Provides 
+  fun providesRetrofit(gson:Gson, okHttp : OkHttp) 
+       : Retrofit = /*..*/
+}
+\end{lstlisting} 
+\end{frame}
+
+\begin{frame}[fragile]
+	\begin{figure}
+		\centering
+		\includegraphics[width=.9\textwidth]{retrofit_Dagger}
+	\end{figure}
+\end{frame}
+
+	\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+@Component(modules = arrayOf(
+        ModuleA::class,
+        ModuleB::class,
+        ModuleC::class
+))
+interface ApplicationComponent {
+
+	fun inject(activity : MainActivity)
+}
+
+\end{lstlisting} 
+\end{frame}
+	\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+val applicationComponent = 
+   DaggerApplicationComponent.builder() // <--
+    .moduleA(ModuleA())
+    .moduleB(ModuleB())
+    .moduleC(ModuleC())
+    .build()
+\end{lstlisting} 
+\end{frame}
+
+	\begin{frame}[fragile]
+		Some dependencies are application-wise (\eg, network or DB). They will be provided through a component rooted at the application level:
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+class MyApplication : Application() {
+  lateinit var component: ApplicationComponent
+  override fun onCreate() {
+    super.onCreate()
+    applicationComponent 
+      = DaggerApplicationComponent.builder()
+         .moduleA(ModuleA(this))
+         .moduleB(ModuleB())
+         .moduleC(MOduleC())
+         .build()
+    }
+}
+\end{lstlisting} 
+\end{frame}
+\begin{frame}
+	Strategy:
+	\begin{itemize}
+		\item Avoid relying only on application level components; scope your dependencies (\eg, have other components rooted at activity/fragment classes)
+		\item Subcomponents allow to have visibility on higher-component dependencies (\eg, a presenter can see netwok request dependencies) 
+		\item Scopes are defined by where the component is rooted (annotations can help identify scoping issues) 
+		\item Scopers are not related to android
+	\item the purpose of scope annotations is to point Dagger provide either scoped or unscoped objects. But it’s our responsibility  to ``scope''. 
+		\item Dependencies are instantiated on-demand if/when needed
+	\end{itemize}
+\end{frame}
+	\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+@MyActivityScope
+@Component(modules = arrayOf(ModuleD::class))
+interface MyActivityComponent {
+    fun inject(activity: MyActivity)
+}
+
+@Scope
+@Retention(AnnotationRetention.RUNTIME)
+annotation class MyActivityScope
+\end{lstlisting} 
+		\begin{alertblock}{Warning!}
+Module $D$ will not have access to dependencies defined in modules $A$, $B$ and $C$ for application component, because this is a new independent component
+		\end{alertblock}
+\end{frame}
+	\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+val myActivityComponent = 
+   DaggerMyActivityComponent.builder() // <--
+    .moduleA(ModuleD())
+    .build()
+\end{lstlisting} 
+\end{frame}
+	\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+class MyActivity : Activity() {
+  lateinit var component: MyActivityComponent
+  override fun onCreate() {
+    super.onCreate()
+    component  
+      = DaggerMyActivityComponent.builder()
+         .moduleA(ModuleD(this))
+         .build()
+    }
+}
+\end{lstlisting} 
+\end{frame}
+\begin{frame}[fragile]
+	Subcomponents:
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+@MyActivityScope
+@SubComponent(modules = arrayOf(ModuleD::class))
+interface MyActivityComponent {
+    fun inject(activity: MyActivity)
+}
+
+@Scope
+@Retention(AnnotationRetention.RUNTIME)
+annotation class MyActivityScope
+\end{lstlisting} 
+		\begin{alertblock}{Warning!}
+This time, Module $D$ will have access to dependencies defined in modules $A$, $B$ and $C$ for application component, because this is a subcomponent
+		\end{alertblock}
+\end{frame}
+	\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+@Component(modules = arrayOf(
+   ModuleA::class,
+   ModuleB::class,
+   ModuleC::class
+))
+interface ApplicationComponent {
+
+  fun plus(moduleD : ModuleD) : MyActivityComponent
+  fun inject(activity : MainActivity)
+}
+
+\end{lstlisting} 
+	\end{frame}
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+class MyActivity : Activity() {
+  lateinit var component: MyActivityComponent
+  override fun onCreate() {
+    super.onCreate()
+    val applicationComponent = /* .... */
+    component  = applicationComponent
+         .plus(ModuleD(this))
+    }
+}
+\end{lstlisting} 
+		\begin{alertblock}{Spoiler!}
+This way, MyActivity knows it's injector!  Violation of DI in a strict sense.
+		\end{alertblock}
+\end{frame}
+
+	\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+\end{lstlisting} 
+\end{frame}
+\begin{frame}
+	With dagger we can replace (at compilation time) the implementation of some interfaces with
+	\begin{itemize}
+		\item debug-only variants of the dependencies (\eg, with logs), keeping the app code exactly the same as per production app 
+		\item mocked dependencies for java testing (and testing the exact code of the app) 
+		\item mocked dependencies for instrumented testing  (\eg, unit test of the view mocking the presenter)  
+		\item Easily replace or enhanced (via decorator pattern) the dependencies without impacting changing any other area of the code (as long as the contract of the interface is the same) 
+	\end{itemize}
+			
+\end{frame}
+\begin{frame}
+	Things to keep in mind:
+	\begin{itemize}
+		\item if there is an error (\eg, missing dependency) you are not able to build the project (no unexpected issues at runtime), most of the time the error message is informative
+		\item Dagger provides no help for dynamic dependency injection at runtime 
+		\item Dagger increases compilation time (generation of new java files occurs at compilation time)
+		\item If not used carefully, it might instantiate lot of stuff at starting time, leading to slower startup times of the app%
+			\footnote{the same can happen manually of course, but sometimes it's easier if dependecies are just handled by dagger2}
+	\end{itemize}
+\end{frame}
+
 	\section{Dagger2 Android }
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+implementation group: 'com.google.dagger', \
+               name: 'dagger-android', \
+	       version: '2.14.1'
+
+kapt group: 'com.google.dagger', \
+     name: 'dagger-android-processor',  \
+     version: '2.14.1'
+\end{lstlisting} 
+\end{frame}
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+class MyActivity : AppCompatActivity() {
+
+    @Inject
+    lateinit var presenter: Presenter
+
+    override fun onCreate(bundle: Bundle?) {
+        AndroidInjection.inject(this) // <--  AMAZING 
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_login)
+    }
+}
+\end{lstlisting} 
+\end{frame}
+
+
+\begin{frame}[fragile]
+Less amazing stuff here\ldots 
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+@Module
+abstract class ActivityBuilder {
+    @ContributesAndroidInjector(modules = arrayOf(ModuleD::class))
+    internal abstract fun bind(): MyActivity
+}
+\end{lstlisting} 
+\end{frame}
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+@Component.Builder
+    interface Builder {
+
+        @BindsInstance
+        fun application(application: Application): Builder
+
+        fun build(): ApplicationComponent
+
+    }
+\end{lstlisting} 
+\end{frame}
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+open class MyApplication : Application(), 
+               HasActivityInjector {
+
+    @Inject
+    lateinit var dispatcher: DispatchingAndroidInjector<Activity>
+
+    override fun onCreate() {
+        super.onCreate()
+        DaggerApplicationComponent.builder()
+                .application(this)
+                .build()
+                .inject(this)
+    }
+    override fun activityInjector(): AndroidInjector<Activity>? {
+        return activityDispatchingAndroidInjector
+    }
+}
+\end{lstlisting} 
+\end{frame}
+
 	\section{Alternative patterns}
 	\begin{frame}[fragile]
 		\begin{itemize}
