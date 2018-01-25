@@ -1,0 +1,139 @@
+\PassOptionsToPackage{table}{xcolor}
+\documentclass[10pt]{beamer}
+\usepackage[english]{babel}
+
+\usetheme{metropolis}
+\usepackage{smartdiagram}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage[scale=2]{ccicons}%creative commons
+\setbeamercovered{transparent}%invisible by default
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+\usepackage{tikz}
+\usepackage{tikz-uml}
+\usetikzlibrary{positioning,chains,fit,shapes,calc}
+
+\newcommand{\mycomment}[1]{}
+\usepackage{fancyvrb}
+% *****************************************************************************
+% Matematica 
+% *****************************************************************************
+
+%\usepackage{amssymb}
+%\usepackage{mathtools}                    % Add support for cramped,
+					  
+%\usepackage[euler]{flexisym}
+%\usepackage{breqn}                        % Breqn
+%\makeatletter
+%   \def\eqnumsize{\normalfont \Tf@font}      % Add support to Minion Pro
+%\makeatother
+%\setkeys{breqn}{labelprefix={eq:}}
+
+
+%\usepackage{asymptote}
+%\usepackage[loop, controls]{animate}
+
+\graphicspath{{./}, {./Images/}}
+
+\lstdefinelanguage{Kotlin}{
+  keywords={package, as, typealias, this, super, val, var, fun, for, null, true, false, is, in, throw, return, break, continue, object, if, try, else, while, do, when, yield, typeof, yield, typeof, class, interface, enum, object, override, public, private, get, set, import, abstract, },
+  keywordstyle=\color{blue}\bfseries,
+  ndkeywords={@Deprecated, Int, Integer, Float, Double, String, Runnable, dynamic},
+  ndkeywordstyle=\color{red}\bfseries,
+  emph={println, return@, forEach,},
+  emphstyle={\color{red}},
+  identifierstyle=\color{black},
+  sensitive=true,
+  commentstyle=\color{gray}\ttfamily,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  stringstyle=\color{gray}\ttfamily,
+  morestring=[b]",
+  morestring=[s]{"""*}{*"""},
+}
+
+\providecommand{\ie}{i.\,e.}
+\providecommand{\Ie}{I.\,e.}
+\providecommand{\eg}{e.\,g.}
+\providecommand{\Eg}{E.\,g.} 
+
+\metroset{block=fill}
+\metroset{titleformat frame=smallcaps}
+
+\title{Dependency injection made easy with Dagger2}
+%\subtitle{and how it can help us building better reactive code}
+
+\date{\today}
+\author[A. Candolini]{Alessandro Candolini}
+%\institute{Department of Physics, University of Trieste}
+% \titlegraphic{\hfill\includegraphics[height=1.5cm]{logo/logo}}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Agenda}
+  \setbeamertemplate{section in toc}[sections numbered]
+  \tableofcontents[hideallsubsections]
+\end{frame}
+
+\section{Dependency injection principles}
+\begin{frame}[fragile]
+	\frametitle{What is a dependency?}
+		\begin{figure}
+			\centering
+\begin{tikzpicture}
+\umlsimpleclass [minimum height=15ex,width=15ex] {A}
+	\umlsimpleclass[x=4,width=5ex]{B}
+\umlunicompo[geometry=|-|]{A}{B}
+\end{tikzpicture}
+		\end{figure}
+\end{frame}
+\begin{frame}[fragile]
+%\begin{lstlisting}[language=java,basicstyle=\ttfamily,keywordstyle=\color{red}]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+/** Class A */
+class A {
+    // ....
+    fun doSOmething() {
+        val text = "...."
+        b.log(text)
+    }
+}
+
+/** Class B (dependency) */
+class B {
+    fun log(text : String) {
+    }
+}
+\end{lstlisting} 
+\end{frame}
+	\begin{frame}[fragile]
+%\begin{tikzpicture}
+%\umlemptyclass{A}
+%\umlemptyclass [x=3, y=0] {B}
+%\umlunicompo[geometry=|-|]{A}{B}
+%\end{tikzpicture}
+%\begin{tikzpicture}
+%\umlsimpleclass [x=0,width=15ex] {A}
+%\umlsimpleclass [ x=10ex, y=0] {B}
+%\umlunicompo[geometry=|-|]{A}{B}
+%\end{tikzpicture}
+	\end{frame}
+
+	\section{Dagger2}
+	\section{Dagger2 Android }
+\plain{Questions?}
+
+%\begin{frame}[allowframebreaks] {References}
+% \bibliography{demo}
+% \bibliographystyle{abbrv}
+%\end{frame}
+
+\end{document}
