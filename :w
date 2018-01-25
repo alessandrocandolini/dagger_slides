@@ -98,7 +98,7 @@
 \begin{frame}[fragile]
 %\begin{lstlisting}[language=java,basicstyle=\ttfamily,keywordstyle=\color{red}]
 \begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-/** Class A (the client) */
+/** Class A */
 class A {
     // ....
     fun doSomething() {
@@ -106,7 +106,7 @@ class A {
     }
 }
 
-/** Class B (dependency/service) */
+/** Class B (dependency) */
 class B {
     fun log(text : String) {
     }
@@ -144,8 +144,8 @@ class B {
 	\begin{frame}[fragile]
 		Drawbacks:
 		\begin{itemize}
-			\item $A$ not testable in isolation (integration test of $A$ \& $B$)
-			\item $A$ \emph{strongly coupled} to $B$ (hardcoded dependency, no way to override/replace it) 
+			\item $A$ not testable in isolation 
+			\item $A$ \emph{tightly coupled} to $B$
 			\item Lack of encapsulation  (backdoor) 
 			\item \emph{Hidden} dependency 
 		\end{itemize}
@@ -153,8 +153,8 @@ class B {
 	\begin{frame}[fragile]
 		More Examples:
 		\begin{itemize}
-			\item \verb|Application.getStaticContext()|
-			\item in order to move one class to a different module, you have to move ``hundreds`` of classes\ldots 
+			\item \verb|Application.getStaticContext()\|
+			\item migrating one class leads to migrate 100 classes\ldots 
 		\end{itemize}
 	\end{frame}
 \begin{frame}[fragile]
@@ -201,20 +201,11 @@ class B {
 \umlunicompo{A}{B}
 \end{tikzpicture}
 		\end{figure}
-			The \emph{life} of the child is completely controlled by the parent.
 %\begin{tikzpicture}
 %\umlsimpleclass [x=0,width=15ex] {A}
 %\umlsimpleclass [ x=10ex, y=0] {B}
 %\umlunicompo[geometry=|-|]{A}{B}
 %\end{tikzpicture}
-	\end{frame}
-	\begin{frame}[fragile]
-		Example:
-		\begin{itemize}
-			\item Custom views or adapters instantiating objects 
-			\item \verb|Date date = new Date()\| 
-			\item 
-		\end{itemize}
 	\end{frame}
 
 	\begin{frame}[fragile]
@@ -223,191 +214,8 @@ class B {
 			\item $A$ is in charge of instantiating $B$ (additional responsibility)
 			\item $A$ can't be tested in isolation (integratin test of $A$ and $B$ together) 
 			\item $A$ is strongly coupled to $B$ (can't replace $B$ rom outside and/or in testing) 
-		\end{itemize}
-	\end{frame}
-\begin{frame}[fragile]
-\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-// Externalise the dependency 
-
-class A(private val b : B) {
-    fun doSomething() {
-	b.log("text") 
-    }
-}
-
-class B {
-    fun log(text: String) {
-    }
-}
-// 
-val b : B = B()
-val a : A = A(b) // <-- plug b
-\end{lstlisting} 
-\end{frame}
-
-\plain{We can do even better\ldots}
-\begin{frame}[fragile]
-\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-
-class A(private val b : B) {
-    fun doSomething() {
-	b.log("text") 
-    }
-}
-
-interface B {
-    fun log(text: String);
-}
-
-class AmazingB : B {
-    override fun log(text : String) {
-    }
-}
-// 
-val b : B = AmazingB()
-val a : A = A(b)
-\end{lstlisting} 
-\end{frame}
-
-\begin{frame}[fragile]
-	Now we have:
-	\begin{itemize}
-		\item Full decoupling
-		\item $A$ loosely coupled to $B$ ($A$ knows anything about $B$ but the contract) 
-		\item Inversion of control%
-			\footnote{Not yet actually\ldots We miss an ingredient}: it's no longer responsibility of $A$ to get its own dependencies 
-	\end{itemize}
-\end{frame}
-\mycomment{
-\begin{frame}[fragile]
-\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-interface Transaction
-
-interface Store { // repository/gateway pattern
-    fun fetch(id : String) : Transaction
-}
-
-class UseCase(val store: Store) { /* .. */ }
-
-\end{lstlisting} 
-\end{frame}
-\begin{frame}[fragile]
-\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-class BaseStore : Store {
-    override fun fetch(id : String): Transaction {/*...*/}
-}
-
-// Delegation pattern
-class StoreA(val store: Store) : Store by store {
-    override fun fetch(id : String): Transactions {
-        /* do something */
-    }
-}
-
-// Delegation pattern 
-class StoreB(val store: Store) : Store by store {
-    override fun fetch(id : String): Transactions {
-        /* do something else */
-    }
-}
-\end{lstlisting} 
-\end{frame}
-}
-\begin{frame}[fragile]
-	There is a problem:
-\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-class C {
-    fun qhdouwh() {
-        val b = AmazingB() // <--  not good 
-        val a = A(b) // <-- not good 
-        a.doSOmething()
-    }
-}
-\end{lstlisting} 
-\end{frame}
-\begin{frame}[fragile]
-	We want (recursively) 
-\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-class C(private a : A) { // A being now an interface 
-    fun qhdouwh() {
-        a.doSOmething()
-    }
-}
-\end{lstlisting} 
-\end{frame}
-\begin{frame}[fragile]
-	Antipattern: 
-\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-class MainActivity : AppCompatActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        val okHttp : OkHttp = ...
-        val gson : Gson = GsonBuilder = ...
-        val retrofit : Retrofit = ...
-        val repository : Repository = ...
-        val usecase : UseCase = ...
-        val presenter : Presenter = ...
-
-    }
-}
-\end{lstlisting} 
-\end{frame}
-\begin{frame}[fragile]
-	
-\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-class MainActivity : AppCompatActivity() {
-
-    @Inject
-    lateinit var presenter : Presenter
-
-    override fun onCreate(bundle: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-	presenter.doSomething()
-    }
-}
-\end{lstlisting} 
-\end{frame}
-
-\begin{frame}[fragile]
-	\begin{figure}
-		\centering
-		\includegraphics[width=.9\textwidth]{inject}
-	\end{figure}
-	\url{https://docs.oracle.com/javaee/6/api/javax/inject/Inject.html}
-\end{frame}
-\begin{frame}[fragile]
-	\begin{alertblock}{Question}
-If 
-		\begin{itemize}
-			\item $A$ is not in charge of getting $B$
-			\item $C$ should not be in charge of instantiating $A$ and $B$  
-		\end{itemize}
-		\textbf{who} is in charge?
-	\end{alertblock}
-
-\end{frame}
-\begin{frame}[fragile]
-	\begin{quotation}
-		In software engineering, dependency injection is a technique whereby one object supplies the dependencies of another object. A dependency is an object that can be used (a service). An injection is the passing of a dependency to a dependent object (a client) that would use it. The service is made part of the client's state. Passing the service to the client, rather than allowing a client to build or find the service, is the fundamental requirement of the pattern.
-	\end{quotation}
-	\begin{quotation}
-		It directly contrasts with the service locator pattern, which allows clients to know about the system they use to find dependencies.
-	\end{quotation}
-	Source: \url{https://en.wikipedia.org/wiki/Dependency_injection}
-\end{frame}
 	\section{Dagger2}
 	\section{Dagger2 Android }
-	\section{Alternative patterns}
-	\begin{frame}
-		\begin{itemize}
-			\item Cake pattern
-			\item Reader monad 
-			\item Implicits (Scala)
-		\end{itemize}
-	\end{frame}
 \plain{Questions?}
 
 %\begin{frame}[allowframebreaks] {References}
