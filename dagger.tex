@@ -101,9 +101,8 @@
 /** Class A */
 class A {
     // ....
-    fun doSOmething() {
-        val text = "...."
-        b.log(text)
+    fun doSomething() {
+        b.log("text")
     }
 }
 
@@ -114,6 +113,69 @@ class B {
 }
 \end{lstlisting} 
 \end{frame}
+	\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+/** Class A */
+class A {
+    fun doSomething() {
+        B.log("text") // <- static method
+    }
+}
+
+/** Class B (Dependency) */
+class B {
+    companion object {
+        fun log(text: String) {
+        }
+    }
+}
+\end{lstlisting} 
+	\end{frame}
+
+	\begin{frame}
+		Examples:
+		\begin{itemize}
+			\item Helper  classes
+			\item Utils  classes
+			\item Manager classes, etc\ldots
+		\end{itemize}
+	\end{frame}
+
+	\begin{frame}[fragile]
+		Drawbacks:
+		\begin{itemize}
+			\item $A$ not testable in isolation 
+			\item $A$ \emph{tightly coupled} to $B$
+			\item Lack of encapsulation  (backdoor) 
+			\item \emph{Hidden} dependency 
+		\end{itemize}
+	\end{frame}
+	\begin{frame}[fragile]
+		More Examples:
+		\begin{itemize}
+			\item \verb|Application.getStaticContext()\|
+			\item migrating one class leads to migrate 100 classes\ldots 
+		\end{itemize}
+	\end{frame}
+\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+/** Class A */
+class A {
+    fun doSomething() {
+        B.log("text") // <- static method
+    }
+}
+
+/** Class B (Dependency) */
+class B {
+    companion object {
+        fun log(text: String) {
+        }
+    }
+}
+\end{lstlisting} 
+
+
 	\begin{frame}[fragile]
 %\begin{tikzpicture}
 %\umlemptyclass{A}
