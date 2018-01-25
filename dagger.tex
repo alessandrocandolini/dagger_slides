@@ -115,14 +115,14 @@ class B {
 \end{frame}
 	\begin{frame}[fragile]
 \begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-/** Class A */
+// Option 1 - static methods 
+
 class A {
     fun doSomething() {
         B.log("text") // <- static method
     }
 }
 
-/** Class B (Dependency) */
 class B {
     companion object {
         fun log(text: String) {
@@ -159,29 +159,48 @@ class B {
 	\end{frame}
 \begin{frame}[fragile]
 \begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
-/** Class A */
+// Option 2 - singletons
+
 class A {
     fun doSomething() {
-        B.log("text") // <- static method
+	B.log("text") // <- singleton
     }
 }
 
-/** Class B (Dependency) */
-class B {
-    companion object {
-        fun log(text: String) {
-        }
+object B {
+    fun log(text: String) {
     }
 }
 \end{lstlisting} 
+\end{frame}
+\begin{frame}[fragile]
+\begin{lstlisting}[language=Kotlin, basicstyle=\ttfamily]
+// Option 3 - composition 
 
+class A {
+    private val b : B = B() // <-- instantiate
+    
+    fun doSomething() {
+        b.log("text")
+    }
+}
 
+class B {
+    fun log(text: String) {
+    }
+}
+\end{lstlisting} 
+\end{frame}
 	\begin{frame}[fragile]
-%\begin{tikzpicture}
-%\umlemptyclass{A}
-%\umlemptyclass [x=3, y=0] {B}
-%\umlunicompo[geometry=|-|]{A}{B}
-%\end{tikzpicture}
+		\frametitle{Composition}
+		\begin{figure}
+			\centering
+\begin{tikzpicture}
+	\umlclass{A}{}{+ doSomething() : void}
+	\umlclass [x=5, y=0] {B}{}{+ log(text : String) : void}
+\umlunicompo{A}{B}
+\end{tikzpicture}
+		\end{figure}
 %\begin{tikzpicture}
 %\umlsimpleclass [x=0,width=15ex] {A}
 %\umlsimpleclass [ x=10ex, y=0] {B}
